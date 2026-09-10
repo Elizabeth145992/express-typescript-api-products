@@ -2,6 +2,7 @@ import express from "express";
 import logger from "./middlewares/logger.js";
 import checkAccess from "./middlewares/checkAccess.js";
 import checkAdmin from "./middlewares/checkAdmin.js";
+import errorHandler from "./middlewares/errorHandler.js";
 import productRouter from "./routes/product.routes.js";
 
 const app = express();
@@ -22,6 +23,8 @@ app.get(
     });
   }
 );
+
+app.use(errorHandler);
 
 const port = 3000;
 
