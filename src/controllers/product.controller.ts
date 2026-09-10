@@ -1,5 +1,6 @@
 import express from "express";
 import ProductService from "../services/product.service.js";
+import AppError from "../errors/AppError.js";
 import type { ICreateProduct, IUpdateProduct } from "../types/product.types.js";
 
 const productService = new ProductService();
@@ -9,7 +10,6 @@ export const getProducts = (
   res: express.Response
 ) => {
     const products = productService.getAll();
-    
     res.json(products);
 };
 
@@ -21,9 +21,7 @@ export const getProductById = (
     const product = productService.getById(productId);
 
     if (!product) {
-        return res.status(404).json({
-            message: "Producto no encontrado",
-        });
+        throw new AppError("Producto no encontrado", 404);
     }
     res.json(product);
 }
@@ -48,9 +46,7 @@ export const updateProduct = (
     const product = productService.update(productId, name, price);
 
     if (!product) {
-        return res.status(404).json({
-            message: "Producto no encontrado para actuallizar",
-        });
+        throw new AppError("Producto no encontrado", 404);
     }
 
     res.status(200).json(product);
@@ -71,9 +67,7 @@ export const patchProduct = (
   );
 
   if (!product) {
-    return res.status(404).json({
-      message: "Producto no encontrado",
-    });
+    throw new AppError("Producto no encontrado", 404);
   }
 
   res.status(200).json(product);
@@ -88,9 +82,7 @@ export const deleteProduct = (
     const isDeleted = productService.delete(productId);
 
     if (!isDeleted) {
-        return res.status(404).json({
-            message: "Producto no encontrado para su eliminación",
-        });
+        throw new AppError("Producto no encontrado", 404);
     }
 
     res.status(200).json({
