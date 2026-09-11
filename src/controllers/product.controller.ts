@@ -1,7 +1,7 @@
 import express from "express";
 import ProductService from "../services/product.service.js";
 import AppError from "../errors/AppError.js";
-import type { ICreateProduct, IUpdateProduct } from "../types/product.types.js";
+import type { CreateProductDTO, UpdateProductDTO } from "../schemas/product.schema.js";
 
 const productService = new ProductService();
 
@@ -30,7 +30,7 @@ export const createProduct = (
     req: express.Request,
     res: express.Response
 ) => {
-    const { name, price }: ICreateProduct = req.body;
+    const { name, price }: CreateProductDTO = req.body;
 
     const newProduct = productService.create(name, price);
     res.status(201).json(newProduct);
@@ -41,7 +41,7 @@ export const updateProduct = (
     res: express.Response,
 ) => {
     const productId = Number(req.params.id);
-    const { name, price }: ICreateProduct = req.body;
+    const { name, price }: CreateProductDTO = req.body;
 
     const product = productService.update(productId, name, price);
 
@@ -58,7 +58,7 @@ export const patchProduct = (
 ) => {
   const productId = Number(req.params.id);
 
-  const { name, price }: IUpdateProduct = req.body;
+  const { name, price }: UpdateProductDTO = req.body;
 
   const product = productService.patch(
     productId,

@@ -7,11 +7,12 @@ const errorHandler = (
   res: express.Response,
   next: express.NextFunction,
 ) => {
-  console.error(error);
+  //console.error(error);
 
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({
       message: error.message,
+      details: error.details,
     });
   }
 
