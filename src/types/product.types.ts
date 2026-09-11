@@ -3,13 +3,3 @@ export interface IProduct {
   name: string;
   price: number;
 }
-
-export interface ICreateProduct {
-  name: string;
-  price: number;
-}
-
-export interface IUpdateProduct {
-  name?: string;
-  price?: number;
-}
