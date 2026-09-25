@@ -1,76 +1,82 @@
 import type { IProduct } from "../types/product.types.js";
+import ProductRepository from "../repositories/product.repository.js";
+import AppError from "../errors/AppError.js";
 
 class ProductService {
-  private products: IProduct[] = [
-    { id: 1, name: "Laptop", price: 1200 },
-    { id: 2, name: "Smartphone", price: 800 },
-  ];
-  
-  private nextProductId = 3;
+  private repository = new ProductRepository();
 
-  getAll(): IProduct[] {
-    return this.products;
+  async getAll(): Promise<IProduct[]> {
+    return this.repository.findAll();
   }
 
-  getById(id: number): IProduct | undefined {
-    return this.products.find((p) => p.id === id);
-  }
+  async getById(id: number): Promise<IProduct> {
+    const product = await this.repository.findById(id);
 
-  create(name: string, price: number): IProduct {
-    const newProduct: IProduct = {
-        id: this.nextProductId,
-        name,
-        price
+    if (product === null) {
+      throw new AppError("Producto no encontrado", 404);
     }
 
-    this.products.push(newProduct);
-    this.nextProductId ++;
+    return product;
+  }
+
+  async create(name: string, price: number, stock: number): Promise<IProduct> {
+    const newProducId = await this.repository.create(name, price, stock);
+
+    if (newProducId === null) {
+      throw new AppError("No se pudo crear el producto", 500);
+    }
+
+    const newProduct = await this.repository.findById(newProducId);
+
+    if (newProduct === null) {
+      throw new AppError("Producto creado pero no encontrado", 500);
+    }
 
     return newProduct;
   }
 
-  update(id: number, name: string, price: number): IProduct | undefined {
-    const indexProduct = this.products.findIndex((p) => p.id === id);
+  async update(id: number, name: string, price: number, stock: number): Promise<IProduct> {
+    const isUpdated = await this.repository.update(id, name, price, stock);
 
-    if (indexProduct === -1) {
-        return undefined;
+    if (!isUpdated) {
+      throw new AppError("Producto no actualizado con el id: " + id, 404);
     }
 
-    this.products[indexProduct] = {
-        ...this.products[indexProduct],
-        name,
-        price,
-    }
+    const product = await this.repository.findById(id);
 
-    return this.products[indexProduct];
+    if (product === null) {
+      throw new AppError("Producto actualizado, pero no encontrado", 500);
+    }
+    return product;
   }
 
-  patch(id: number, name: string | undefined, price: number | undefined): IProduct | undefined {
-    const indexProduct = this.products.findIndex((p) => p.id === id);
+  async patch(
+    id: number,
+    name: string | undefined,
+    price: number | undefined,
+    stock: number | undefined,
+  ): Promise<IProduct> {
+    const isUpdated = await this.repository.patch(id, name, price, stock);
 
-    if (indexProduct === -1) {
-        return undefined;
+    if (!isUpdated) {
+      throw new AppError("Producto no actualizado con el id " + id, 404);
     }
 
-    if (name !== undefined) {
-        this.products[indexProduct].name = name;
+    const product = await this.repository.findById(id);
+
+    if (product === null) {
+      throw new AppError("Producto actualizdo pero no encontrado", 500);
     }
 
-    if (price !== undefined) {
-        this.products[indexProduct].price = price;
-    }
-    return this.products[indexProduct];
+    return product;
   }
 
-  delete(id: number): boolean {
-    const indexProduct = this.products.findIndex((p) => p.id === id);
+  async delete(id: number):Promise<void> {
+    const isDeleted = await this.repository.delete(id);
 
-    if (indexProduct === -1) {
-        return false;
+    if (!isDeleted) {
+      throw new AppError("El producto no fue eliminado", 404);
     }
-
-    this.products.splice(indexProduct, 1);
-    return true;
   }
 }
 
