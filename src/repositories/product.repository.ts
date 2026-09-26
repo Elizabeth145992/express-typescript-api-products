@@ -1,4 +1,4 @@
-import type { RowDataPacket, ResultSetHeader } from "mysql2";
+import type { ResultSetHeader } from "mysql2";
 import pool from "../database/connection.js";
 import type { IProduct } from "../types/product.types.js";
 import type { ProductRow } from "../types/product-row.types.js";
