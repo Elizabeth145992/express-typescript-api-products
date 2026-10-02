@@ -1,9 +1,13 @@
 import type { IProduct } from "../types/product.types.js";
-import ProductRepository from "../repositories/product.repository.js";
+import type { IProductRepository } from "../interfaces/product-repository.interface.js";
 import AppError from "../errors/AppError.js";
 
 class ProductService {
-  private repository = new ProductRepository();
+  private repository: IProductRepository;
+
+  constructor(repository: IProductRepository) {
+    this.repository = repository;
+  }
 
   async getAll(): Promise<IProduct[]> {
     return this.repository.findAll();
@@ -35,7 +39,12 @@ class ProductService {
     return newProduct;
   }
 
-  async update(id: number, name: string, price: number, stock: number): Promise<IProduct> {
+  async update(
+    id: number,
+    name: string,
+    price: number,
+    stock: number,
+  ): Promise<IProduct> {
     const isUpdated = await this.repository.update(id, name, price, stock);
 
     if (!isUpdated) {
@@ -71,7 +80,7 @@ class ProductService {
     return product;
   }
 
-  async delete(id: number):Promise<void> {
+  async delete(id: number): Promise<void> {
     const isDeleted = await this.repository.delete(id);
 
     if (!isDeleted) {

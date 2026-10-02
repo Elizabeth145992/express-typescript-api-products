@@ -1,9 +1,10 @@
 import express from "express";
 import ProductService from "../services/product.service.js";
-import AppError from "../errors/AppError.js";
 import type { CreateProductDTO, UpdateProductDTO } from "../schemas/product.schema.js";
+import ProductRepository from "../repositories/product.repository.js";
 
-const productService = new ProductService();
+const productRepository = new ProductRepository();
+const productService = new ProductService(productRepository);
 
 export const getProducts = async (
   req: express.Request,
