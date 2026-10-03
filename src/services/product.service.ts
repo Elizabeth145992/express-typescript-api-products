@@ -1,8 +1,9 @@
 import type { IProduct } from "../types/product.types.js";
 import type { IProductRepository } from "../interfaces/product-repository.interface.js";
 import AppError from "../errors/AppError.js";
+import type { IProductService } from "../interfaces/product-service.interface.js";
 
-class ProductService {
+class ProductService implements IProductService {
   private repository: IProductRepository;
 
   constructor(repository: IProductRepository) {
@@ -74,7 +75,7 @@ class ProductService {
     const product = await this.repository.findById(id);
 
     if (product === null) {
-      throw new AppError("Producto actualizdo pero no encontrado", 500);
+      throw new AppError("Producto actualizado, pero no encontrado", 500);
     }
 
     return product;

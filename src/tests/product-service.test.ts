@@ -11,21 +11,23 @@ const createMock = jest.fn<
 const updateMock = jest.fn<
   (id: number, name: string, price: number, stock: number) => Promise<boolean>
 >();
+const patchMock = jest.fn<
+  (
+    id: number,
+    name?: string,
+    price?: number,
+    stock?: number,
+  ) => Promise<boolean>
+>();
+const deleteMock = jest.fn<(id: number) => Promise<boolean>>();
 
 const mockRepository: IProductRepository = {
   findById: findByIdMock,
   findAll: findAllMock,
   create: createMock,
   update: updateMock,
-  patch: jest.fn<
-    (
-      id: number,
-      name?: string,
-      price?: number,
-      stock?: number,
-    ) => Promise<boolean>
-  >(),
-  delete: jest.fn<(id: number) => Promise<boolean>>(),
+  patch: patchMock,
+  delete: deleteMock,
 };
 
 const productService = new ProductService(mockRepository);
@@ -153,5 +155,60 @@ describe("ProductService", () => {
     await expect(
       productService.update(7, "Tablet Pro", 200, 15),
     ).rejects.toThrow("Producto actualizado, pero no encontrado");
+  });
+
+  it("should patch a product when patch is called with valid data", async () => {
+    patchMock.mockResolvedValueOnce(true);
+    findByIdMock.mockResolvedValueOnce({
+      id: 7,
+      name: "Tablet Pro",
+      price: 220,
+      stock: 15,
+    });
+
+    const product = await productService.patch(7, undefined, 220, 15);
+
+    expect(patchMock).toHaveBeenCalledWith(7, undefined, 220, 15);
+    expect(findByIdMock).toHaveBeenCalledWith(7);
+    expect(product).toEqual({
+      id: 7,
+      name: "Tablet Pro",
+      price: 220,
+      stock: 15,
+    });
+  });
+
+  it("should throw an error when patch is called and the product cannot be patched", async () => {
+    patchMock.mockResolvedValueOnce(false);
+
+    await expect(
+      productService.patch(7, undefined, 220, 15),
+    ).rejects.toThrow("Producto no actualizado con el id 7");
+  });
+
+  it("should throw an error when patch is called and the product is not found after patch", async () => {
+    patchMock.mockResolvedValueOnce(true);
+    findByIdMock.mockResolvedValueOnce(null);
+
+    await expect(
+      productService.patch(7, undefined, 220, 15),
+    ).rejects.toThrow("Producto actualizado, pero no encontrado");
+  });
+
+  it("should delete a product when delete is called with a valid id", async () => {
+    deleteMock.mockResolvedValueOnce(true);
+
+    const result = await productService.delete(7);
+
+    expect(deleteMock).toHaveBeenCalledWith(7);
+    expect(result).toBeUndefined();
+  });
+
+  it("should throw an error when delete is called and the product cannot be deleted", async () => {
+    deleteMock.mockResolvedValueOnce(false);
+
+    await expect(
+      productService.delete(7),
+    ).rejects.toThrow("El producto no fue eliminado");
   });
 });
