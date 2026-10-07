@@ -50,7 +50,7 @@ export const createProductController = (productService: IProductService) => {
   const deleteProduct = async (req: express.Request, res: express.Response) => {
     const productId = Number(req.params.id);
 
-    const isDeleted = await productService.delete(productId);
+    await productService.delete(productId);
 
     res.status(200).json({
       message: "Producto eliminado con éxito",
