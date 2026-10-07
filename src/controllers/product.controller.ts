@@ -1,91 +1,68 @@
 import express from "express";
-import ProductService from "../services/product.service.js";
-import AppError from "../errors/AppError.js";
-import type { CreateProductDTO, UpdateProductDTO } from "../schemas/product.schema.js";
+import type {
+  CreateProductDTO,
+  UpdateProductDTO,
+} from "../schemas/product.schema.js";
+import type { IProductService } from "../interfaces/product-service.interface.js";
 
-const productService = new ProductService();
-
-export const getProducts = (
-  req: express.Request,
-  res: express.Response
-) => {
-    const products = productService.getAll();
+export const createProductController = (productService: IProductService) => {
+  const getProducts = async (req: express.Request, res: express.Response) => {
+    const products = await productService.getAll();
     res.json(products);
-};
+  };
 
-export const getProductById = (
-  req: express.Request,
-  res: express.Response
-) => {
-    const productId = Number(req.params.id);
-    const product = productService.getById(productId);
-
-    if (!product) {
-        throw new AppError("Producto no encontrado", 404);
-    }
-    res.json(product);
-}
-
-export const createProduct = (
-    req: express.Request,
-    res: express.Response
-) => {
-    const { name, price }: CreateProductDTO = req.body;
-
-    const newProduct = productService.create(name, price);
-    res.status(201).json(newProduct);
-}
-
-export const updateProduct = (
+  const getProductById = async (
     req: express.Request,
     res: express.Response,
-) => {
+  ) => {
     const productId = Number(req.params.id);
-    const { name, price }: CreateProductDTO = req.body;
+    const product = await productService.getById(productId);
 
-    const product = productService.update(productId, name, price);
+    res.json(product);
+  };
 
-    if (!product) {
-        throw new AppError("Producto no encontrado", 404);
-    }
+  const createProduct = async (req: express.Request, res: express.Response) => {
+    const { name, price, stock }: CreateProductDTO = req.body;
+
+    const newProduct = await productService.create(name, price, stock);
+    res.status(201).json(newProduct);
+  };
+
+  const updateProduct = async (req: express.Request, res: express.Response) => {
+    const id = Number(req.params.id);
+    const { name, price, stock }: CreateProductDTO = req.body;
+
+    const product = await productService.update(id, name, price, stock);
 
     res.status(200).json(product);
-}
+  };
 
-export const patchProduct = (
-  req: express.Request,
-  res: express.Response
-) => {
-  const productId = Number(req.params.id);
-
-  const { name, price }: UpdateProductDTO = req.body;
-
-  const product = productService.patch(
-    productId,
-    name,
-    price
-  );
-
-  if (!product) {
-    throw new AppError("Producto no encontrado", 404);
-  }
-
-  res.status(200).json(product);
-};
-
-export const deleteProduct = (
-    req: express.Request,
-    res: express.Response,
-) => {
+  const patchProduct = async (req: express.Request, res: express.Response) => {
     const productId = Number(req.params.id);
 
-    const isDeleted = productService.delete(productId);
+    const { name, price, stock }: UpdateProductDTO = req.body;
 
-    if (!isDeleted) {
-        throw new AppError("Producto no encontrado", 404);
-    }
+    const product = await productService.patch(productId, name, price, stock);
+
+    res.status(200).json(product);
+  };
+
+  const deleteProduct = async (req: express.Request, res: express.Response) => {
+    const productId = Number(req.params.id);
+
+    await productService.delete(productId);
 
     res.status(200).json({
-        message: "Producto eliminado con éxito",
+      message: "Producto eliminado con éxito",
     });
-}
+  };
+
+  return {
+    getProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    patchProduct,
+    deleteProduct,
+  }
+};

@@ -6,7 +6,21 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
-    "dev": "tsx watch src/app.ts"
+    "dev": "tsx watch src/app.ts",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+  },
+  "jest": {
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "transform": {},
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    }
   },
   "keywords": [],
   "author": "",
@@ -14,11 +28,14 @@
   "description": "",
   "dependencies": {
     "express": "^5.2.1",
+    "mysql2": "^3.24.4",
     "zod": "^4.6.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^26.4.1",
+    "jest": "^30.5.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
