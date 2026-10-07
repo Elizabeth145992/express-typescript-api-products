@@ -1,9 +1,14 @@
 import type { IProduct } from "../types/product.types.js";
-import ProductRepository from "../repositories/product.repository.js";
+import type { IProductRepository } from "../interfaces/product-repository.interface.js";
 import AppError from "../errors/AppError.js";
+import type { IProductService } from "../interfaces/product-service.interface.js";
 
-class ProductService {
-  private repository = new ProductRepository();
+class ProductService implements IProductService {
+  private repository: IProductRepository;
+
+  constructor(repository: IProductRepository) {
+    this.repository = repository;
+  }
 
   async getAll(): Promise<IProduct[]> {
     return this.repository.findAll();
@@ -35,7 +40,12 @@ class ProductService {
     return newProduct;
   }
 
-  async update(id: number, name: string, price: number, stock: number): Promise<IProduct> {
+  async update(
+    id: number,
+    name: string,
+    price: number,
+    stock: number,
+  ): Promise<IProduct> {
     const isUpdated = await this.repository.update(id, name, price, stock);
 
     if (!isUpdated) {
@@ -65,13 +75,13 @@ class ProductService {
     const product = await this.repository.findById(id);
 
     if (product === null) {
-      throw new AppError("Producto actualizdo pero no encontrado", 500);
+      throw new AppError("Producto actualizado, pero no encontrado", 500);
     }
 
     return product;
   }
 
-  async delete(id: number):Promise<void> {
+  async delete(id: number): Promise<void> {
     const isDeleted = await this.repository.delete(id);
 
     if (!isDeleted) {

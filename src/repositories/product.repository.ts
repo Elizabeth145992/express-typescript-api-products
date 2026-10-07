@@ -3,8 +3,9 @@ import pool from "../database/connection.js";
 import type { IProduct } from "../types/product.types.js";
 import type { ProductRow } from "../types/product-row.types.js";
 import ProductMapper from "../mappers/product.mapper.js";
+import type { IProductRepository } from "../interfaces/product-repository.interface.js";
 
-class ProductRepository {
+class ProductRepository implements IProductRepository {
   private mapper = new ProductMapper();
 
   async findAll(): Promise<IProduct[]> {
