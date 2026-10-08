@@ -1,5 +1,5 @@
 import type { ResultSetHeader } from "mysql2";
-import pool from "../database/connection.js";
+import type { Pool } from "mysql2/promise";
 import type { IProduct } from "../types/product.types.js";
 import type { ProductRow } from "../types/product-row.types.js";
 import ProductMapper from "../mappers/product.mapper.js";
@@ -7,17 +7,22 @@ import type { IProductRepository } from "../interfaces/product-repository.interf
 
 class ProductRepository implements IProductRepository {
   private mapper = new ProductMapper();
+  private pool: Pool;
+
+  constructor(pool: Pool) {
+    this.pool = pool;
+  }
 
   async findAll(): Promise<IProduct[]> {
-    const [rows] = await pool.query<ProductRow[]>(
-      "SELECT id, name, price, stock FROM products;",
+    const [rows] = await this.pool.query<ProductRow[]>(
+      "SELECT id, name, price, stock FROM products ORDER BY id ASC;",
     );
 
     return rows.map((row) => this.mapper.toProduct(row));
   }
 
   async findById(id: number): Promise<IProduct | null> {
-    const [rows] = await pool.query<ProductRow[]>(
+    const [rows] = await this.pool.query<ProductRow[]>(
       "SELECT  id, name, price, stock FROM products WHERE id = ?;",
       [id],
     );
@@ -33,7 +38,7 @@ class ProductRepository implements IProductRepository {
     price: number,
     stock: number,
   ): Promise<number | null> {
-    const [rows] = await pool.query<ResultSetHeader>(
+    const [rows] = await this.pool.query<ResultSetHeader>(
       "INSERT INTO products (name, price, stock) VALUES (?, ?, ?);",
       [name, price, stock],
     );
@@ -51,7 +56,7 @@ class ProductRepository implements IProductRepository {
     price: number,
     stock: number,
   ): Promise<boolean> {
-    const [result] = await pool.query<ResultSetHeader>(
+    const [result] = await this.pool.query<ResultSetHeader>(
       "UPDATE products SET name = ?, price = ?, stock = ? WHERE id = ?;",
       [name, price, stock, id],
     );
@@ -85,7 +90,7 @@ class ProductRepository implements IProductRepository {
 
     values.push(id);
 
-    const [result] = await pool.query<ResultSetHeader>(
+    const [result] = await this.pool.query<ResultSetHeader>(
       `UPDATE products SET ${parameters.join(", ")} WHERE id = ?;`,
       values,
     );
@@ -94,7 +99,7 @@ class ProductRepository implements IProductRepository {
   }
 
   async delete(id: number): Promise<boolean> {
-    const [result] = await pool.query<ResultSetHeader>(
+    const [result] = await this.pool.query<ResultSetHeader>(
       "DELETE FROM products WHERE id = ?;",
       [id],
     );

@@ -4,8 +4,9 @@ import { validatePatchProduct } from "../middlewares/validatePatchProduct.js";
 import { createProductController } from "../controllers/product.controller.js";
 import ProductRepository from "../repositories/product.repository.js";
 import ProductService from "../services/product.service.js";
+import pool from "../database/connection.js";
 
-const productRepository = new ProductRepository();
+const productRepository = new ProductRepository(pool);
 const productService = new ProductService(productRepository);
 
 const router = express.Router();
