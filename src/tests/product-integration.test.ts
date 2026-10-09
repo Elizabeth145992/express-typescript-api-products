@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, beforeEach } from "@jest/globals";
 import setupTestDatabase from "../database/setupTestDatabase.js";
+import teardownTestDatabase from "../database/teardownTestDatabase.js";
 import testPool from "../database/testConnection.js";
 import ProductRepository from "../repositories/product.repository.js";
 
@@ -13,6 +14,7 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await testPool.end();
+  await teardownTestDatabase();
 });
 
 const productRepository = new ProductRepository(testPool);
@@ -82,5 +84,83 @@ describe("ProductRepository", () => {
             stock: 3
         }
     ]);
+  });
+
+  it("should update product by id", async () => {
+    const productId = await productRepository.create("Laptop", 2500.25, 10);
+
+    if (productId === null) {
+      throw new Error("Failed to create product.");
+    }
+    const isProductUpdated = await productRepository.update(productId, "Laptop Pro", 2550.25, 8);
+
+    expect(isProductUpdated).toBe(true);
+
+    const productUpdated = await productRepository.findById(productId);
+    if (productUpdated === null) {
+      throw new Error("Product no found after update.");
+    }
+
+    expect(productUpdated.name).toEqual("Laptop Pro");
+    expect(productUpdated.price).toEqual(2550.25);
+    expect(productUpdated.stock).toEqual(8);
+  });
+
+  it("should return false when does not exist product to update", async () => {
+    const isUpdatedProduct = await productRepository.update(999, "Keyboard Pro", 100.20, 3);
+
+    expect(isUpdatedProduct).toBe(false);
+  });
+
+  it("should patch product by id", async () => {
+    const productId = await productRepository.create("Mouse", 55.10, 20);
+
+    if (productId === null) {
+      throw new Error("Failed to create product.");
+    }
+
+    const isUpdatedProduct = await productRepository.patch(productId, undefined, undefined, 18);
+
+    if (!isUpdatedProduct) {
+      throw new Error("Failed to patch product.");
+    }
+
+    const product = await productRepository.findById(productId);
+
+    if (product === null) {
+      throw new Error("Product not found after patch");
+    }
+
+    expect(product.name).toEqual("Mouse");
+    expect(product.price).toEqual(55.10);
+    expect(product.stock).toEqual(18);
+  });
+
+  it("should return false when patching a non-existent product", async () => {
+    const isUpdatedProduct = await productRepository.patch(999, undefined, undefined, 5);
+    
+    expect(isUpdatedProduct).toBe(false);
+  });
+
+  it("should delete product", async () => {
+    const productId = await productRepository.create("HeadPhone", 75.80, 5);
+
+    if (productId === null) {
+      throw new Error("Faled to create product.");
+    }
+
+    const isDeletedProduct = await productRepository.delete(productId);
+
+    expect(isDeletedProduct).toBe(true);
+
+    const product = await productRepository.findById(productId);
+
+    expect(product).toBeNull();
+  });
+
+  it("should return false when deleting a non-existent product", async () => {
+    const isProductDeleted = await productRepository.delete(999);
+
+    expect(isProductDeleted).toBe(false);
   });
 });
