@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "tsx watch src/app.ts",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:coverage": "npm test -- --coverage"
   },
   "jest": {
     "testPathIgnorePatterns": [
@@ -27,6 +28,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^18.0.6",
     "express": "^5.2.1",
     "mysql2": "^3.24.4",
     "zod": "^4.6.1"
