@@ -1,15 +1,21 @@
-import type { Pool, ResultSetHeader, PoolConnection } from "mysql2/promise";
-import type { ICreateOrder } from "../types/order.types.js";
+import type { Pool, ResultSetHeader, PoolConnection, RowDataPacket } from "mysql2/promise";
+import type { ICreateOrderInput } from "../schemas/order.schema.js";
 import type { ProductRow } from "../types/product-row.types.js";
+import ProductMapper from "../mappers/product.mapper.js";
+
+interface IStatusOrder extends RowDataPacket {
+  id: string;
+}
 
 class OrderRepository {
   private pool: Pool;
+  private mapper = new ProductMapper();
 
   constructor(pool: Pool) {
     this.pool = pool;
   }
 
-  async createOrder(order: ICreateOrder): Promise<void> {
+  async createOrder(order: ICreateOrderInput): Promise<number> {
     const connection = await this.pool.getConnection();
 
     try {
@@ -18,7 +24,7 @@ class OrderRepository {
       const itemsId = order.items.map((item) => item.productId);
       const placeholders = itemsId.map(() => "?").join(", ");
 
-      const [rows] = await connection.query<ProductRow[]>(
+      const [rows] = await connection.execute<ProductRow[]>(
         `SELECT id, name, price, stock 
         FROM products
         WHERE id IN (${placeholders})`,
@@ -28,9 +34,10 @@ class OrderRepository {
       if (rows.length !== itemsId.length) {
         throw new Error("Uno o más productos no existen");
       }
-      //IMPLEMENTAR MAPPER
 
-      const totalToPay = rows.reduce((total, item) => {
+      const rowsMapper = rows.map((row) => this.mapper.toProduct(row));
+
+      const totalToPay = rowsMapper.reduce((total, item) => {
         const itemFound = order.items.find(
           (itemFind) => itemFind.productId === item.id,
         );
@@ -43,6 +50,15 @@ class OrderRepository {
 
         return total + item.price * itemFound.quantity;
       }, 0);
+
+      
+      const [statusResult] = await connection.execute<IStatusOrder[]>(
+        `SELECT id FROM order_statuse WHERE name = pendiente;`,
+      );
+
+      if (statusResult.length <= 0) {
+        throw new Error("Error al obtener el ststaus de la orden");
+      }
 
       const [result] = await connection.execute<ResultSetHeader>(
         `INSERT INTO orders
@@ -64,14 +80,51 @@ class OrderRepository {
           order.shippingCity,
           order.shippingState,
           order.shippingPostalCode,
-          0,
-          1,
+          totalToPay,
+          statusResult[0].id,
         ],
       );
 
       const orderId = result.insertId;
 
+      const queryItemsOrder: string[] = [];
+      const paramsItemsOrder: number[] = [];
+
+      for (const row of rowsMapper) {
+        const item = order.items.find(
+          (itemFind) => itemFind.productId === row.id,
+        );
+
+        if (!item) {
+          throw new Error(
+            "Produco no encontrado en la lista para obtener su precio y cantidad",
+          );
+        }
+        await this.decreaseStock(connection, item.productId, item.quantity);
+
+        queryItemsOrder.push("(?, ?, ?, ?)");
+        paramsItemsOrder.push(
+          orderId,
+          item.productId,
+          item.quantity,
+          row.price,
+        );
+      }
+
+      const [res] = await connection.execute<ResultSetHeader>(
+        `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ${queryItemsOrder.join(
+          ", ",
+        )};`,
+        paramsItemsOrder,
+      );
+
+      if (rowsMapper.length !== res.affectedRows) {
+        throw new Error("Error al insertar los items de la orden");
+      }
+
       await connection.commit();
+
+      return orderId;
     } catch (error) {
       await connection.rollback();
       throw error;
@@ -99,3 +152,5 @@ class OrderRepository {
     }
   }
 }
+
+export default OrderRepository;
