@@ -4,7 +4,7 @@ import { createValidationError } from "../utils/validationError.js";
 
 export const validateOrder = (
   req: express.Request,
-  res: express.Request,
+  res: express.Response,
   next: express.NextFunction,
 ) => {
     const result = createOrderSchema.safeParse(req.body);

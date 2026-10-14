@@ -1,13 +1,19 @@
-import type { Pool, ResultSetHeader, PoolConnection, RowDataPacket } from "mysql2/promise";
+import type {
+  Pool,
+  ResultSetHeader,
+  PoolConnection,
+  RowDataPacket,
+} from "mysql2/promise";
 import type { ICreateOrderInput } from "../schemas/order.schema.js";
 import type { ProductRow } from "../types/product-row.types.js";
 import ProductMapper from "../mappers/product.mapper.js";
+import type { IOrderRepository } from "../interfaces/order-repository.interface.js";
 
 interface IStatusOrder extends RowDataPacket {
-  id: string;
+  id: number;
 }
 
-class OrderRepository {
+class OrderRepository implements IOrderRepository {
   private pool: Pool;
   private mapper = new ProductMapper();
 
@@ -44,20 +50,20 @@ class OrderRepository {
 
         if (!itemFound) {
           throw new Error(
-            "Produco no encontrado en la lista para obtener su precio",
+            "Producto no encontrado en la lista para obtener su precio",
           );
         }
 
         return total + item.price * itemFound.quantity;
       }, 0);
 
-      
       const [statusResult] = await connection.execute<IStatusOrder[]>(
-        `SELECT id FROM order_statuse WHERE name = pendiente;`,
+        `SELECT id FROM order_status WHERE name = ?;`,
+        ["pendiente"],
       );
 
       if (statusResult.length <= 0) {
-        throw new Error("Error al obtener el ststaus de la orden");
+        throw new Error("No se encontró el estado Pendienten");
       }
 
       const [result] = await connection.execute<ResultSetHeader>(
@@ -133,7 +139,7 @@ class OrderRepository {
     }
   }
 
-  async decreaseStock(
+  private async decreaseStock(
     connection: PoolConnection,
     productId: number,
     quantity: number,

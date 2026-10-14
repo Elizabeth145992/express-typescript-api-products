@@ -1,6 +1,6 @@
-import AppError from "../errors/AppError.js";
 import type { IOrderService } from "../interfaces/order-service.interface.js";
 import type { IOrderRepository } from "../interfaces/order-repository.interface.js";
+import type { ICreateOrderInput } from "../schemas/order.schema.js";
 
 class OrderService implements IOrderService {
     private repository: IOrderRepository;
@@ -9,8 +9,8 @@ class OrderService implements IOrderService {
         this.repository = repository;
     }
 
-    async createOrder(): Promise<number> {
-        return 1;
+    async createOrder(order: ICreateOrderInput): Promise<number> {
+        return this.repository.createOrder(order);
     }
 }
 
