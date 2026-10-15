@@ -58,7 +58,7 @@ class OrderRepository implements IOrderRepository {
       }, 0);
 
       const [statusResult] = await connection.execute<IStatusOrder[]>(
-        `SELECT id FROM order_status WHERE name = ?;`,
+        `SELECT id FROM order_statuses WHERE name = ?;`,
         ["pendiente"],
       );
 
