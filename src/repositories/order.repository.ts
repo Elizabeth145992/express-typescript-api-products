@@ -8,6 +8,8 @@ import type { ICreateOrderInput } from "../schemas/order.schema.js";
 import type { ProductRow } from "../types/product-row.types.js";
 import ProductMapper from "../mappers/product.mapper.js";
 import type { IOrderRepository } from "../interfaces/order-repository.interface.js";
+import type { IOrder } from "../types/order.types.js";
+import type { OrderRowComplete } from "../types/order-row-types.js";
 
 interface IStatusOrder extends RowDataPacket {
   id: number;
@@ -19,6 +21,61 @@ class OrderRepository implements IOrderRepository {
 
   constructor(pool: Pool) {
     this.pool = pool;
+  }
+
+  async findAll(): Promise<IOrder[] | []> {
+    const [results] = await this.pool.execute<OrderRowComplete[]>(
+      `SELECT 
+        o.id, o.customer_id AS customerId, CONCAT(c.first_name, " ", c.last_name) AS customer,
+        o.shipping_street, o.shipping_number, o.shipping_neighborhood, o.shipping_city, o.shipping_state,
+        o.shipping_postal_code, o.total, os.name AS status, o.created_at AS createdAt, oi.product_id AS productId, 
+        p.name AS productName, oi.price, oi.quantity  
+      FROM orders AS o
+      INNER JOIN order_items AS oi
+      on o.id = oi.order_id
+      INNER JOIN products AS p
+      on p.id = oi.product_id
+      INNER JOIN customers AS c
+      on c.id = o.customer_id
+      INNER JOIN order_statuses AS os
+      on os.id = o.status_id
+      ORDER BY o.id DESC, oi.product_id ASC;`,
+    );
+
+    if (results.length > 0) {
+      return this.groupItemsOrder(results);
+    }
+    return [];
+  }
+
+  async findById(id: number): Promise<IOrder | null> {
+    const [result] = await this.pool.execute<OrderRowComplete[]>(
+      `SELECT 
+        o.id, o.customer_id AS customerId, CONCAT(c.first_name, " ", c.last_name) AS customer,
+        o.shipping_street, o.shipping_number, o.shipping_neighborhood, o.shipping_city, o.shipping_state,
+        o.shipping_postal_code, o.total, os.name AS status, o.created_at AS createdAt, oi.product_id AS productId, 
+        p.name AS productName, oi.price, oi.quantity  
+      FROM orders AS o
+      INNER JOIN order_items AS oi
+      on o.id = oi.order_id
+      INNER JOIN products AS p
+      on p.id = oi.product_id
+      INNER JOIN customers AS c
+      on c.id = o.customer_id
+      INNER JOIN order_statuses AS os
+      on os.id = o.status_id
+      WHERE o.id = ?
+      ORDER BY oi.product_id ASC;`,
+      [id],
+    );
+
+    if (result.length > 0) {
+      const orderArray = this.groupItemsOrder(result);
+      if (orderArray.length > 0) {
+        return orderArray[0];
+      }
+    }
+    return null;
   }
 
   async createOrder(order: ICreateOrderInput): Promise<number> {
@@ -156,6 +213,42 @@ class OrderRepository implements IOrderRepository {
         `Producto ${productId} inexistente o inventario insuficiente`,
       );
     }
+  }
+
+  private groupItemsOrder(results: OrderRowComplete[]): IOrder[] | [] {
+    const orderWithItems = results.reduce((acc: Record<number, IOrder>, order: OrderRowComplete) => {
+      const orderKey = order.id;
+      const product = {
+        productId: order.productId,
+        nameProduct: order.productName,
+        quantity: Number(order.quantity),
+        price: Number(order.price),
+      };
+
+      if (!acc[orderKey]) {
+        acc[orderKey] = {
+          id: order.id,
+          customerId: order.customerId,
+          customer: order.customer,
+          shippingStreet: order.shipping_street,
+          shippingNumber: order.shipping_number,
+          shippingNeighborhood: order.shipping_neighborhood,
+          shippingCity: order.shipping_city,
+          shippingState: order.shipping_state,
+          shippingPostalCode: order.shipping_postal_code,
+          total: Number(order.total),
+          status: order.status,
+          items: [product],
+          createdAt: order.createdAt,
+        };
+      } else {
+        acc[orderKey].items.push(product);
+      }
+
+      return acc;
+    },{});
+
+    return Object.values(orderWithItems);
   }
 }
 
