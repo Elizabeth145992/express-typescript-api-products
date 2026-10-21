@@ -12,5 +12,7 @@ const router = express.Router();
 const orderController = createOrderController(orderService);
 
 router.post("/", validateOrder, orderController.createOrder);
+router.get("/", orderController.findAll);
+router.get("/:id", orderController.findById)
 
 export default router;
