@@ -4,8 +4,11 @@ export interface IAuth {
     lastName: string;
     email: string;
     phone: string;
-    password: string;
     active: number;
+}
+
+export interface IAuthCredentials extends IAuth {
+    passwordHash: string;
 }
 
 export interface CreateCustomerData {
@@ -14,4 +17,14 @@ export interface CreateCustomerData {
     email: string;
     phone: string;
     passwordHash: string;
-  }
+}
+
+export interface ILoginResponse {
+    token: string;
+    user: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        email: string;
+    };
+}

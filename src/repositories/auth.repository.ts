@@ -1,8 +1,8 @@
 import type { Pool, ResultSetHeader } from "mysql2/promise";
-import type { IAuth, CreateCustomerData } from "../types/auth.types.js";
+import type { IAuth, CreateCustomerData, IAuthCredentials } from "../types/auth.types.js";
 import type { AuthRow } from "../types/auth-row.types.js";
 import AuthMapper from "../mappers/auth.mapper.js";
-import type { IAuthRepository } from "../interfaces/auth.repository.js";
+import type { IAuthRepository } from "../interfaces/auth.repository.interface.js";
 
 export class AuthRepository implements IAuthRepository {
     private pool: Pool;
@@ -20,19 +20,26 @@ export class AuthRepository implements IAuthRepository {
             [auth.firstName, auth.lastName, auth.email, auth.phone, auth.passwordHash]
         );
 
-            return row.insertId;
+        return row.insertId;
     }
 
-    async findByEmail(email: string): Promise<IAuth | null> {
+    async findByEmail(email: string, isWithCredentials: false): Promise<IAuth | null>;
+    async findByEmail(email: string, isWithCredentials: true): Promise<IAuthCredentials | null>;
+    async findByEmail(
+        email: string,
+        isWithCredentials: boolean,
+    ): Promise<IAuth | IAuthCredentials | null> {
         const [result] = await this.pool.execute<AuthRow[]>(`
             SELECT id, first_name, last_name, email, phone, password_hash, active 
                 FROM customers 
-                WHERE email = ? AND active = 1 LIMIT 1;`, 
+                WHERE email = ? LIMIT 1;`,
             [email]
         );
 
         if (result.length > 0) {
-            return this.mapper.toAuth(result[0]);
+            return isWithCredentials
+                ? this.mapper.toAuthCredentials(result[0])
+                : this.mapper.toAuth(result[0]);
         }
 
         return null;
