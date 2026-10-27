@@ -27,7 +27,8 @@ export default class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(auth.password, 12);
-    return await this.repository.createCustomer({ ...auth, passwordHash });
+    const { password, ...newCustomer } = auth;
+    return await this.repository.createCustomer({ ...newCustomer, passwordHash });
   }
 
   async findByEmail(email: string): Promise<IAuth | null> {
