@@ -1,5 +1,4 @@
 import { beforeAll, afterAll, beforeEach } from "@jest/globals";
-
 import setupTestDatabase from "../database/setupTestDatabase.js";
 import teardownTestDatabase from "../database/teardownTestDatabase.js";
 import testPool from "../database/testConnection.js";
@@ -9,7 +8,7 @@ import { createTestProduct } from "./helpers/product.helper.js";
 import type { ICreateOrderInput } from "../schemas/order.schema.js";
 import { insertStatusOrder } from "./helpers/order_status.helper.js";
 import type { OrderRow } from "../types/order-row-types.js";
-import type { OrderItemRow } from "../types/orderItem-row-types.js";
+import type { OrderItemRow } from "../types/orderItem-row.types.js";
 import type { ProductRow } from "../types/product-row.types.js";
 
 const orderRepository = new OrderRepository(testPool);
