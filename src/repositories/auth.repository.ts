@@ -4,7 +4,7 @@ import type { AuthRow } from "../types/auth-row.types.js";
 import AuthMapper from "../mappers/auth.mapper.js";
 import type { IAuthRepository } from "../interfaces/auth.repository.interface.js";
 
-export class AuthRepository implements IAuthRepository {
+export default class AuthRepository implements IAuthRepository {
     private pool: Pool;
     private mapper = new AuthMapper;
 

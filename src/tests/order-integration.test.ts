@@ -1,5 +1,4 @@
 import { beforeAll, afterAll, beforeEach } from "@jest/globals";
-
 import setupTestDatabase from "../database/setupTestDatabase.js";
 import teardownTestDatabase from "../database/teardownTestDatabase.js";
 import testPool from "../database/testConnection.js";
